@@ -3,20 +3,26 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 describe('AppController', () => {
+  let appService: AppService;
   let appController: AppController;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [AppService],
     }).compile();
 
     appController = app.get<AppController>(AppController);
+    appService = app.get<AppService>(AppService);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('App Controller', () => {
+    it('should return health status', () => {
+      expect(appController.checkHealth()).toEqual({ status: 'working' });
+    });
+
+    it('should return application title', () => {
+      expect(appController.getTitle()).toEqual('<h1>Order test app!</h1>');
     });
   });
 });
