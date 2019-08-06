@@ -7,5 +7,5 @@ export const OrderSchema = new mongoose.Schema({
   address: String,
   totalAmount: String,
   products: [],
-  orderHistory: []
+  orderHistory: [],
 });

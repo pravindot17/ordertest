@@ -1,8 +1,8 @@
 import { Document } from 'mongoose';
 
-export type Product = {
-  name: string,
-  amount: number
+export interface Product {
+  name: string;
+  amount: number;
 }
 
 export interface Order extends Document {
