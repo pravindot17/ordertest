@@ -7,7 +7,7 @@ export class OrderController {
 
   @Post()
   @HttpCode(200)
-  createOrder(@Body() body: any): object {
+  async createOrder(@Body() body): Promise<object> {
     if (!body) throw new BadRequestException('Please provide valid request body')
     if (!body.name) throw new BadRequestException('Please provide valid customer name')
     if (!body.email) throw new BadRequestException('Please provide valid customer email')
