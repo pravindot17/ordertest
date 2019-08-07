@@ -6,6 +6,9 @@ export interface Product {
 }
 
 export interface Order extends Document {
+  orderId: string;
+  orderState: string;
+  orderHistory: object[];
   readonly name: string;
   readonly email: string;
   readonly address: string;

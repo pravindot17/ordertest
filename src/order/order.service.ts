@@ -3,6 +3,7 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order } from './interfaces/order.interface';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { OrderState } from './state-machine/order.state';
 
 @Injectable()
 export class OrderService {
@@ -11,9 +12,15 @@ export class OrderService {
 
   async create(createOrderDto: CreateOrderDto): Promise<any> {
 
-    createOrderDto.orderId = this.generateOrderId();
     const createdOrder = new this.orderModel(createOrderDto);
-    return await createdOrder.save();
+    createdOrder.orderId = this.generateOrderId();
+    createdOrder.orderState = 'created';
+    createdOrder.orderHistory = [{ state: 'created', createdOn: Date.now }];
+
+    const orderResponse = await createdOrder.save();
+    // const order = new OrderState();
+    // order.setState(order.createdOrderState);
+    return orderResponse;
   }
 
   async findAllOrders(): Promise<Order[]> {

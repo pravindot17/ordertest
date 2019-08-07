@@ -6,6 +6,9 @@ export const OrderSchema = new mongoose.Schema({
   email: String,
   address: String,
   totalAmount: String,
+  orderState: String,
   products: [],
   orderHistory: [],
-});
+}, {
+    timestamps: true,
+  });
