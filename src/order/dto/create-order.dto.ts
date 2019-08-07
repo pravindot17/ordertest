@@ -2,7 +2,7 @@ import { IsEmail, IsString, Length, IsArray, ValidateNested, IsNumber } from 'cl
 import { Type } from 'class-transformer';
 
 export class CreateOrderDto {
-  public readonly orderId: string;
+  public orderId: string;
 
   @IsString() @Length(3, 64)
   public readonly name: string;
