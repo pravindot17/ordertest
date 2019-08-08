@@ -6,7 +6,6 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { map, catchError } from 'rxjs/operators';
 import { PAYMENT_API, AUTH_TOKEN } from '../constants';
 import { Observable } from 'rxjs';
-import { AxiosResponse } from 'axios';
 
 @Injectable()
 export class OrderService implements IOrderService {
@@ -14,7 +13,7 @@ export class OrderService implements IOrderService {
   constructor(private http: HttpService, @InjectModel('Order') private readonly orderModel: Model<Order>) { }
 
   async create(createOrderDto: CreateOrderDto): Promise<any> {
-    console.log('calling create of ervice')
+    console.log('calling create of ervice');
     const createdOrder = new this.orderModel(createOrderDto);
     createdOrder.orderId = this.generateOrderId();
     createdOrder.orderState = 'created';
@@ -24,11 +23,11 @@ export class OrderService implements IOrderService {
   }
 
   updateStateChange(orderId, state) {
-    this.orderModel.findOne({ orderId }, (err, Order) => {
-      if (err) throw new InternalServerErrorException(`Failed to change the state to ${state}`);
-      Order.orderState = state;
-      Order.orderHistory.push({ state, createdAt: new Date() });
-      Order.save();
+    this.orderModel.findOne({ orderId }, (err, order) => {
+      if (err) { throw new InternalServerErrorException(`Failed to change the state to ${state}`); }
+      order.orderState = state;
+      order.orderHistory.push({ state, createdAt: new Date() });
+      order.save();
     });
   }
 
@@ -37,7 +36,7 @@ export class OrderService implements IOrderService {
   }
 
   async getOrderDetails(id): Promise<Order> {
-    return await this.orderModel.findOne({ orderId: id }).exec();
+    return await this.orderModel.findOne({ orderId: id });
   }
 
   generateOrderId(length = 15) {
@@ -45,7 +44,7 @@ export class OrderService implements IOrderService {
   }
 
   makePaymant(orderDetails: object): Observable<any> {
-    console.log('orderDetails in makepayment', orderDetails)
+    console.log('orderDetails in makepayment', orderDetails);
     return this.http.post(PAYMENT_API, orderDetails, { headers: { Authorization: AUTH_TOKEN } }).pipe(
       map((res) => {
         return res.data;

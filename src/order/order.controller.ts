@@ -13,10 +13,10 @@ export class OrderController {
   async createOrder(@Body() createOrderDto: CreateOrderDto): Promise<object> {
     createOrderDto.paymentDetails = USER_PAYMENT_CREDS;
     createOrderDto.orderState = 'init';
-    let orderMachine = new OrderMachine(createOrderDto);
-    let fsm = orderMachine.machine
-    await fsm.create(this.orderService)
-    let orderResult = fsm.savedOrder;
+    const orderMachine = new OrderMachine(createOrderDto);
+    const fsm = orderMachine.machine;
+    await fsm.create(this.orderService);
+    const orderResult = fsm.savedOrder;
 
     // trigger payment call by doing transition to confirm
     await fsm.confirm(this.orderService);

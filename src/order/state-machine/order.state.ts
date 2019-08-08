@@ -1,21 +1,20 @@
-import StateMachine = require('javascript-state-machine')
+import StateMachine = require('javascript-state-machine');
 import { IOrderService } from '../interfaces/order.interface';
-import { BadRequestException, InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
-import { rejects } from 'assert';
+import { InternalServerErrorException } from '@nestjs/common';
 import { OrderService } from '../order.service';
 
 export enum OrderTransition {
   CREATE = 'create',
   CONFIRM = 'confirm',
   CANCEL = 'cancel',
-  DELIVER = 'deliver'
+  DELIVER = 'deliver',
 }
 
 export class OrderMachine {
-  machine: any
+  machine: any;
 
   constructor(order) {
-    console.log('order in mcahine', order)
+    console.log('order in mcahine', order);
     this.machine = new StateMachine({
       init: order.orderState,
       data: { order },
@@ -23,45 +22,45 @@ export class OrderMachine {
         {
           name: OrderTransition.CREATE,
           from: 'init',
-          to: 'created'
+          to: 'created',
         },
         {
           name: OrderTransition.CONFIRM,
           from: 'created',
-          to: 'confirmed'
+          to: 'confirmed',
         },
         {
           name: OrderTransition.DELIVER,
           from: 'confirmed',
-          to: 'delivered'
+          to: 'delivered',
         },
         {
           name: OrderTransition.CANCEL,
           from: ['confirmed', 'created'],
-          to: 'cancelled'
-        }
+          to: 'cancelled',
+        },
       ],
       methods: {
         onBeforeCreate: this.onBeforeCreateOrder,
         onBeforeConfirm: this.onBeforeConfirm,
-      }
-    })
+      },
+    });
   }
 
   private async onBeforeCreateOrder(context: any, orderService: IOrderService) {
-    let machine = context.fsm;
+    const machine = context.fsm;
     machine.savedOrder = await orderService.create(machine.order);
     return machine.savedOrder;
   }
 
   private async onBeforeConfirm(context: any, orderService: OrderService) {
-    let machine = context.fsm;
+    const machine = context.fsm;
     orderService.makePaymant(machine.savedOrder).subscribe(paymentResponse => {
-      console.log('paymentResponse', paymentResponse)
+      console.log('paymentResponse', paymentResponse);
       if (paymentResponse.paymentStatus !== true) {
         throw new InternalServerErrorException('Payment has failed!');
       }
-      orderService.updateStateChange(machine.savedOrder.orderId, 'confirmed')
+      orderService.updateStateChange(machine.savedOrder.orderId, 'confirmed');
     }, error => {
       console.log('Got the error', error.response.message);
       throw new InternalServerErrorException(error.response);
