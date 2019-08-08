@@ -5,7 +5,7 @@ export const OrderSchema = new mongoose.Schema({
   name: String,
   email: String,
   address: String,
-  totalAmount: String,
+  totalAmount: Number,
   orderState: String,
   products: [],
   orderHistory: [],

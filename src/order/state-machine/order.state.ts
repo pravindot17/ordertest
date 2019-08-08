@@ -44,31 +44,27 @@ export class OrderMachine {
       methods: {
         onBeforeCreate: this.onBeforeCreateOrder,
         onBeforeConfirm: this.onBeforeConfirm,
-        onLeavecreated: this.a
       }
     })
   }
 
-  a() {
-    console.log('came in a')
-  }
-
   private async onBeforeCreateOrder(context: any, orderService: IOrderService) {
     let machine = context.fsm;
-    machine.output = await orderService.create(machine.order);
-    return machine.output;
+    machine.savedOrder = await orderService.create(machine.order);
+    return machine.savedOrder;
   }
 
   private async onBeforeConfirm(context: any, orderService: OrderService) {
     let machine = context.fsm;
-    orderService.makePaymant(machine.order).subscribe(paymentResponse => {
+    orderService.makePaymant(machine.savedOrder).subscribe(paymentResponse => {
       console.log('paymentResponse', paymentResponse)
       if (paymentResponse.paymentStatus !== true) {
         throw new InternalServerErrorException('Payment has failed!');
       }
+      orderService.updateStateChange(machine.savedOrder.orderId, 'confirmed')
     }, error => {
       console.log('Got the error', error.response.message);
-      // throw new InternalServerErrorException(error.response);
+      throw new InternalServerErrorException(error.response);
     });
   }
 }

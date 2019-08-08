@@ -16,8 +16,9 @@ export class OrderController {
     let orderMachine = new OrderMachine(createOrderDto);
     let fsm = orderMachine.machine
     await fsm.create(this.orderService)
-    let orderResult = fsm.output;
+    let orderResult = fsm.savedOrder;
 
+    // trigger payment call by doing transition to confirm
     await fsm.confirm(this.orderService);
 
     return { status: 'created', orderResult };

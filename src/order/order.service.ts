@@ -1,4 +1,4 @@
-import { Injectable, HttpService, HttpException } from '@nestjs/common';
+import { Injectable, HttpService, HttpException, InternalServerErrorException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order, IOrderService } from './interfaces/order.interface';
@@ -18,8 +18,18 @@ export class OrderService implements IOrderService {
     const createdOrder = new this.orderModel(createOrderDto);
     createdOrder.orderId = this.generateOrderId();
     createdOrder.orderState = 'created';
+    createdOrder.totalAmount = 1000;
     createdOrder.orderHistory = [{ state: 'created', createdAt: new Date() }];
     return await createdOrder.save();
+  }
+
+  updateStateChange(orderId, state) {
+    this.orderModel.findOne({ orderId }, (err, Order) => {
+      if (err) throw new InternalServerErrorException(`Failed to change the state to ${state}`);
+      Order.orderState = state;
+      Order.orderHistory.push({ state, createdAt: new Date() });
+      Order.save();
+    });
   }
 
   async findAllOrders(): Promise<Order[]> {
