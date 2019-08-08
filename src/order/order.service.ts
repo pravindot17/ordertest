@@ -1,26 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpService, HttpException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { Order } from './interfaces/order.interface';
+import { Order, IOrderService } from './interfaces/order.interface';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderState } from './state-machine/order.state';
+import { map, catchError } from 'rxjs/operators';
+import { PAYMENT_API, AUTH_TOKEN } from '../constants';
+import { Observable } from 'rxjs';
+import { AxiosResponse } from 'axios';
 
 @Injectable()
-export class OrderService {
+export class OrderService implements IOrderService {
 
-  constructor(@InjectModel('Order') private readonly orderModel: Model<Order>) { }
+  constructor(private http: HttpService, @InjectModel('Order') private readonly orderModel: Model<Order>) { }
 
   async create(createOrderDto: CreateOrderDto): Promise<any> {
-
+    console.log('calling create of ervice')
     const createdOrder = new this.orderModel(createOrderDto);
     createdOrder.orderId = this.generateOrderId();
     createdOrder.orderState = 'created';
-    createdOrder.orderHistory = [{ state: 'created', createdOn: Date.now }];
-
-    const orderResponse = await createdOrder.save();
-    // const order = new OrderState();
-    // order.setState(order.createdOrderState);
-    return orderResponse;
+    createdOrder.orderHistory = [{ state: 'created', createdAt: new Date() }];
+    return await createdOrder.save();
   }
 
   async findAllOrders(): Promise<Order[]> {
@@ -33,5 +32,17 @@ export class OrderService {
 
   generateOrderId(length = 15) {
     return new Array(length).join().replace(/(.|$)/g, () => ((Math.random() * 36) | 0).toString(36));
+  }
+
+  makePaymant(orderDetails: object): Observable<any> {
+    console.log('orderDetails in makepayment', orderDetails)
+    return this.http.post(PAYMENT_API, orderDetails, { headers: { Authorization: AUTH_TOKEN } }).pipe(
+      map((res) => {
+        return res.data;
+      }),
+      catchError(e => {
+        throw new HttpException(e.response.data, e.response.status);
+      }),
+    );
   }
 }

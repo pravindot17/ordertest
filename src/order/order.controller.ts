@@ -1,6 +1,8 @@
 import { Controller, Post, Body, HttpCode, Get, Param } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { USER_PAYMENT_CREDS } from '../constants';
+import { OrderMachine } from './state-machine/order.state';
 
 @Controller('order')
 export class OrderController {
@@ -9,7 +11,15 @@ export class OrderController {
   @Post()
   @HttpCode(200)
   async createOrder(@Body() createOrderDto: CreateOrderDto): Promise<object> {
-    const orderResult = await this.orderService.create(createOrderDto);
+    createOrderDto.paymentDetails = USER_PAYMENT_CREDS;
+    createOrderDto.orderState = 'init';
+    let orderMachine = new OrderMachine(createOrderDto);
+    let fsm = orderMachine.machine
+    await fsm.create(this.orderService)
+    let orderResult = fsm.output;
+
+    await fsm.confirm(this.orderService);
+
     return { status: 'created', orderResult };
   }
 

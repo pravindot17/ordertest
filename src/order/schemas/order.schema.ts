@@ -9,6 +9,7 @@ export const OrderSchema = new mongoose.Schema({
   orderState: String,
   products: [],
   orderHistory: [],
+  paymentDetails: {},
 }, {
     timestamps: true,
   });
