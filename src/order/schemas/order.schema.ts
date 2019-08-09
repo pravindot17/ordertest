@@ -7,6 +7,7 @@ export const OrderSchema = new mongoose.Schema({
   address: String,
   totalAmount: Number,
   orderState: String,
+  transactionId: String,
   products: [],
   orderHistory: [],
   paymentDetails: {},

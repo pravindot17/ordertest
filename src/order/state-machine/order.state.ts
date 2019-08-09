@@ -14,7 +14,6 @@ export class OrderMachine {
   machine: any;
 
   constructor(order) {
-    console.log('order in mcahine', order);
     this.machine = new StateMachine({
       init: order.orderState,
       data: { order },
@@ -43,6 +42,7 @@ export class OrderMachine {
       methods: {
         onBeforeCreate: this.onBeforeCreateOrder,
         onBeforeConfirm: this.onBeforeConfirm,
+        onCancel: this.onCancel,
       },
     });
   }
@@ -56,14 +56,18 @@ export class OrderMachine {
   private async onBeforeConfirm(context: any, orderService: OrderService) {
     const machine = context.fsm;
     orderService.makePaymant(machine.savedOrder).subscribe(paymentResponse => {
-      console.log('paymentResponse', paymentResponse);
       if (paymentResponse.paymentStatus !== true) {
-        throw new InternalServerErrorException('Payment has failed!');
+        return orderService.updateStateChange(machine.savedOrder.orderId, 'cancelled');
       }
-      orderService.updateStateChange(machine.savedOrder.orderId, 'confirmed');
+      orderService.updateStateChange(machine.savedOrder.orderId, 'confirmed', paymentResponse.transactionId);
     }, error => {
       console.log('Got the error', error.response.message);
-      throw new InternalServerErrorException(error.response);
+      // throw new InternalServerErrorException(error.response);
     });
+  }
+
+  private async onCancel(context: any, orderService: OrderService) {
+    const machine = context.fsm;
+    orderService.updateStateChange(machine.order.orderId, 'cancelled');
   }
 }

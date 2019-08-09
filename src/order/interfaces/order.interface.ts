@@ -15,12 +15,13 @@ export interface Order extends Document {
   readonly email: string;
   readonly address: string;
   totalAmount: number;
+  transactionId: string;
   readonly products: Product[];
 }
 
 export interface IOrderService {
-  create(createOrderDto: CreateOrderDto)
-  findAllOrders()
-  getOrderDetails(id)
-  makePaymant(orderDetails: object)
+  create(createOrderDto: CreateOrderDto);
+  findAllOrders();
+  getOrderDetails(id);
+  makePaymant(orderDetails: object);
 }
