@@ -8,6 +8,7 @@ export const OrderSchema = new mongoose.Schema({
   totalAmount: Number,
   orderState: String,
   transactionId: String,
+  cancelledReason: String,
   products: [],
   orderHistory: [],
   paymentDetails: {},

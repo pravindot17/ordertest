@@ -6,6 +6,8 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { map, catchError } from 'rxjs/operators';
 import { PAYMENT_API, AUTH_TOKEN } from '../constants';
 import { Observable } from 'rxjs';
+import { calculateTotalAmount, generateOrderId } from '../helper';
+import { OrderMachine } from './state-machine/order.state';
 
 @Injectable()
 export class OrderService implements IOrderService {
@@ -14,19 +16,20 @@ export class OrderService implements IOrderService {
 
   async create(createOrderDto: CreateOrderDto): Promise<any> {
     const createdOrder = new this.orderModel(createOrderDto);
-    createdOrder.orderId = this.generateOrderId();
+    createdOrder.orderId = generateOrderId();
     createdOrder.orderState = 'created';
-    createdOrder.totalAmount = 1000;
+    createdOrder.totalAmount = calculateTotalAmount(createOrderDto.products, 'amount');
     createdOrder.orderHistory = [{ state: 'created', createdAt: new Date() }];
     return await createdOrder.save();
   }
 
-  updateStateChange(orderId, state, transactionId = null) {
+  updateStateChange(orderId, state, transactionId = null, cancelledReason = null) {
     this.orderModel.findOne({ orderId }, (err, order) => {
       if (err) { throw new InternalServerErrorException(`Failed to change the state to ${state}`); }
       order.orderState = state;
       order.orderHistory.push({ state, createdAt: new Date() });
-      order.transactionId = transactionId;
+      if (transactionId) { order.transactionId = transactionId; }
+      if (cancelledReason) { order.cancelledReason = cancelledReason; }
       order.save();
     });
   }
@@ -39,8 +42,14 @@ export class OrderService implements IOrderService {
     return await this.orderModel.findOne({ orderId: id });
   }
 
-  generateOrderId(length = 15) {
-    return new Array(length).join().replace(/(.|$)/g, () => ((Math.random() * 36) | 0).toString(36));
+  async trackOrderDetails(id): Promise<Order> {
+    return await this.orderModel.findOne({ orderId: id }, {
+      _id: false,
+      orderState: true,
+      orderHistory: true,
+      transactionId: true,
+      cancelledReason: true,
+    });
   }
 
   makePaymant(orderDetails: object): Observable<any> {
@@ -52,5 +61,11 @@ export class OrderService implements IOrderService {
         throw new HttpException(e.response.data, e.response.status);
       }),
     );
+  }
+
+  async getStateMachine(orderId) {
+    const order = await this.getOrderDetails(orderId);
+    const orderMachine = new OrderMachine(order);
+    return orderMachine.machine;
   }
 }

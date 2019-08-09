@@ -18,32 +18,26 @@ export class OrderController {
     const fsm = orderMachine.machine;
     await fsm.create(this.orderService);
     const orderResult = fsm.savedOrder;
-    if (!fsm.can('confirm')) {
-      throw new ConflictException('Confirm transition is not allowed');
-    }
-    // trigger payment call by doing transition to confirm
-    await fsm.confirm(this.orderService);
 
+    if (!fsm.can('confirm')) { throw new ConflictException('Confirm transition is not allowed'); }
+    // trigger payment call by doing transition to confirm
+    fsm.confirm(this.orderService);
     return { status: 'created', orderResult };
   }
 
   @Put('cancel')
   async cancelOrder(@Body() cancelOrderDto: CancelOrderDto): Promise<object> {
 
-    const order = await this.orderService.getOrderDetails(cancelOrderDto.orderId);
-    const orderMachine = new OrderMachine(order);
-    const fsm = orderMachine.machine;
-    if (!fsm.can('cancel')) {
-      throw new ConflictException('Cancel transition is not allowed');
-    }
+    const machine = await this.orderService.getStateMachine(cancelOrderDto.orderId);
+    if (!machine.can('cancel')) { throw new ConflictException('Cancel transition is not allowed'); }
 
-    await fsm.cancel(this.orderService);
+    await machine.cancel(this.orderService);
     return { status: 'cancelled' };
   }
 
-  @Get(':id')
-  async getOrderDetails(@Param('id') id): Promise<object> {
-    return await this.orderService.getOrderDetails(id);
+  @Get('track/:id')
+  async trackOrderDetails(@Param('id') id): Promise<object> {
+    return await this.orderService.trackOrderDetails(id);
   }
 
   @Get()

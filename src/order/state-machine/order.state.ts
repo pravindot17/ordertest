@@ -1,7 +1,7 @@
 import StateMachine = require('javascript-state-machine');
 import { IOrderService } from '../interfaces/order.interface';
-import { InternalServerErrorException } from '@nestjs/common';
 import { OrderService } from '../order.service';
+import { TIME_TO_DELIVER_INSEC } from '../../constants';
 
 export enum OrderTransition {
   CREATE = 'create',
@@ -42,7 +42,9 @@ export class OrderMachine {
       methods: {
         onBeforeCreate: this.onBeforeCreateOrder,
         onBeforeConfirm: this.onBeforeConfirm,
+        onAfterConfirm: this.onAfterConfirm,
         onCancel: this.onCancel,
+        onAfterDeliver: this.onAfterDeliver,
       },
     });
   }
@@ -54,20 +56,43 @@ export class OrderMachine {
   }
 
   private async onBeforeConfirm(context: any, orderService: OrderService) {
-    const machine = context.fsm;
-    orderService.makePaymant(machine.savedOrder).subscribe(paymentResponse => {
-      if (paymentResponse.paymentStatus !== true) {
-        return orderService.updateStateChange(machine.savedOrder.orderId, 'cancelled');
-      }
-      orderService.updateStateChange(machine.savedOrder.orderId, 'confirmed', paymentResponse.transactionId);
-    }, error => {
-      console.log('Got the error', error.response.message);
-      // throw new InternalServerErrorException(error.response);
+    return new Promise((resolve, reject) => {
+      const machine = context.fsm;
+      orderService.makePaymant(machine.savedOrder).subscribe(async (paymentResponse) => {
+        if (paymentResponse.paymentStatus !== true) {
+          await orderService.updateStateChange(machine.savedOrder.orderId, 'cancelled', null, 'Payment declined');
+          return false;
+        }
+        await orderService.updateStateChange(machine.savedOrder.orderId, 'confirmed', paymentResponse.transactionId);
+        return resolve();
+      }, error => {
+        console.log('Payment service failed', error.response.message);
+        return false;
+      });
     });
   }
 
   private async onCancel(context: any, orderService: OrderService) {
     const machine = context.fsm;
-    orderService.updateStateChange(machine.order.orderId, 'cancelled');
+    orderService.updateStateChange(machine.order.orderId, 'cancelled', null, 'Customer cancelled the order');
+  }
+
+  private async onAfterConfirm(context: any, orderService: OrderService) {
+    const machine = context.fsm;
+    setTimeout(() => {
+      machine.deliver(orderService);
+    }, TIME_TO_DELIVER_INSEC);
+  }
+
+  private async onAfterDeliver(context: any, orderService: OrderService) {
+    const machine = context.fsm;
+
+    // fetching the latest order state as within interval customer may cancel the order
+    const fsm = await orderService.getStateMachine(machine.savedOrder.orderId);
+    if (!fsm.can('deliver')) {
+      console.log('Deliver transition is not allowed');
+      return false;
+    }
+    orderService.updateStateChange(machine.savedOrder.orderId, 'delivered');
   }
 }

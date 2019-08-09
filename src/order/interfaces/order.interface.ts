@@ -16,6 +16,7 @@ export interface Order extends Document {
   readonly address: string;
   totalAmount: number;
   transactionId: string;
+  cancelledReason: string;
   readonly products: Product[];
 }
 
