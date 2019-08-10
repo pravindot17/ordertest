@@ -40,6 +40,11 @@ export class OrderController {
     return await this.orderService.trackOrderDetails(id);
   }
 
+  @Get(':id')
+  async getOrderDetails(@Param('id') id): Promise<object> {
+    return await this.orderService.getOrderDetails(id);
+  }
+
   @Get()
   async getAllOrders(): Promise<object> {
     return await this.orderService.findAllOrders();
