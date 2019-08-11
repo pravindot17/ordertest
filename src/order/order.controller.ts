@@ -22,7 +22,7 @@ export class OrderController {
     if (!fsm.can('confirm')) { throw new ConflictException('Confirm transition is not allowed'); }
     // trigger payment call by doing transition to confirm
     fsm.confirm(this.orderService);
-    return { status: 'created', orderResult };
+    return orderResult;
   }
 
   @Put('cancel')
