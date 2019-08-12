@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, Get, Param, Put, ConflictException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, Get, Param, Put, ConflictException, NotFoundException } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { USER_PAYMENT_CREDS } from '../constants';
@@ -37,12 +37,16 @@ export class OrderController {
 
   @Get('track/:id')
   async trackOrderDetails(@Param('id') id): Promise<object> {
-    return await this.orderService.trackOrderDetails(id);
+    const order = await this.orderService.trackOrderDetails(id);
+    if (!order) { throw new NotFoundException('Order does not exist!'); }
+    return order;
   }
 
   @Get(':id')
   async getOrderDetails(@Param('id') id): Promise<object> {
-    return await this.orderService.getOrderDetails(id);
+    const order = await this.orderService.getOrderDetails(id);
+    if (!order) { throw new NotFoundException('Order does not exist!'); }
+    return order;
   }
 
   @Get()

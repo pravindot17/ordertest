@@ -1,4 +1,4 @@
-import { Injectable, HttpService, HttpException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, HttpService, HttpException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Order, IOrderService } from './interfaces/order.interface';
@@ -65,6 +65,7 @@ export class OrderService implements IOrderService {
 
   async getStateMachine(orderId) {
     const order = await this.getOrderDetails(orderId);
+    if (!order) { throw new NotFoundException('Order does not exist!'); }
     const orderMachine = new OrderMachine(order);
     return orderMachine.machine;
   }
