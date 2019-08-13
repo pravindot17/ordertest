@@ -53,6 +53,11 @@ $ npm run start:hmr
 $ npm run start:prod
 ```
 
+## Running the app
+
+You can find the postman collection here
+https://www.getpostman.com/collections/6e619b15002233133ada
+
 ## About me
 Hello folks, I am passionate about coding, designing architecture and learning new things. To know more about me you can use the following links.
  - [LinkedIn](https://www.linkedin.com/in/pravin-lolage)
