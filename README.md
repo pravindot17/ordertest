@@ -11,6 +11,7 @@ This repository is for order test api.
  - Angular: 8+
  - Typescript: 3.4+
  - MongoDb: 2.6+
+  - Angular CLI: 8.2+ (**Please make sure you have the latest cli running**)
 
 Make sure you have cloned the following two microservices:
   - Order API - [Github Link](https://github.com/pravindot17/ordertest)
